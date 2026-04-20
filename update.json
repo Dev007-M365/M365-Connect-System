@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "files": [
+    "M365-Connect-GUI.ps1",
+    "Launch-M365Connect.bat",
+    "version.txt"
+  ],
+  "baseUrl": "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/M365-Connect-System/main/"
+}
