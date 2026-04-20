@@ -1,13 +1,14 @@
 ﻿Add-Type -AssemblyName PresentationFramework
 
 $ScriptRoot    = $PSScriptRoot
-$TenantCsvPath = Join-Path $ScriptRoot "tenants.csv"
+$TenantCsvPath = Join-Path $ScriptRoot "tenant.csv"
 
 #-------------------------
 # Helper: Write to log box
 #-------------------------
 function Write-Log {
-    param([string]$Message, [string]$Color = "Black")
+    param([string]$Message)
+
     $null = $LogBox.Dispatcher.Invoke([action]{
         $LogBox.AppendText("$Message`r`n")
         $LogBox.ScrollToEnd()
@@ -21,11 +22,12 @@ function Ensure-Module {
     param([string]$Name)
 
     if (-not (Get-Module -ListAvailable -Name $Name)) {
-        Write-Log "Installing module: $Name..." "DarkGoldenrod"
+        Write-Log "Installing module: $Name..."
         Install-Module $Name -Scope CurrentUser -Force -AllowClobber
     }
+
     Import-Module $Name -ErrorAction Stop
-    Write-Log "Module ready: $Name" "DarkGreen"
+    Write-Log "Module ready: $Name"
 }
 
 #-------------------------
@@ -53,9 +55,9 @@ function Connect-GraphDelegated {
         "Presence.Read.All"
     )
 
-    Write-Log "Connecting to Microsoft Graph (delegated)..."
+    Write-Log "Connecting to Microsoft Graph..."
     Connect-MgGraph -TenantId $TenantId -Scopes $Scopes -NoWelcome
-    Write-Log "Connected to Microsoft Graph (delegated)." "DarkGreen"
+    Write-Log "Connected to Microsoft Graph."
 }
 
 function Connect-ExchangeOnline {
@@ -64,21 +66,21 @@ function Connect-ExchangeOnline {
     Ensure-Module "ExchangeOnlineManagement"
     Write-Log "Connecting to Exchange Online as $AdminUPN..."
     Connect-ExchangeOnline -UserPrincipalName $AdminUPN -ShowBanner:$false
-    Write-Log "Connected to Exchange Online." "DarkGreen"
+    Write-Log "Connected to Exchange Online."
 }
 
 function Connect-PnP {
     param([string]$SPOUrl, [string]$AdminUPN)
 
     if (-not $SPOUrl) {
-        Write-Log "No SPO URL defined for this tenant. Skipping PnP." "DarkGoldenrod"
+        Write-Log "No SPO URL defined for this tenant. Skipping PnP."
         return
     }
 
     Ensure-Module "PnP.PowerShell"
     Write-Log "Connecting to SharePoint Online (PnP) at $SPOUrl..."
     Connect-PnPOnline -Url $SPOUrl -Interactive -LoginName $AdminUPN
-    Write-Log "Connected to SharePoint Online (PnP)." "DarkGreen"
+    Write-Log "Connected to SharePoint Online (PnP)."
 }
 
 function Connect-Teams {
@@ -87,7 +89,7 @@ function Connect-Teams {
     Ensure-Module "MicrosoftTeams"
     Write-Log "Connecting to Microsoft Teams as $AdminUPN..."
     Connect-MicrosoftTeams -AccountId $AdminUPN
-    Write-Log "Connected to Microsoft Teams." "DarkGreen"
+    Write-Log "Connected to Microsoft Teams."
 }
 
 #-------------------------
@@ -140,12 +142,12 @@ if (-not $Tenants -or $Tenants.Count -eq 0) {
         <!-- Profile selection -->
         <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Profile:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <ComboBox x:Name="ProfileCombo" Width="200">
+            <ComboBox x:Name="ProfileCombo" Width="250">
                 <ComboBoxItem Content="Graph only" Tag="Graph"/>
                 <ComboBoxItem Content="Teams only" Tag="Teams"/>
                 <ComboBoxItem Content="Full Admin (Graph + EXO + PnP + Teams)" Tag="Full"/>
             </ComboBox>
-            <Button x:Name="HelpButton" Content="Global Admin / Graph Note" Margin="10,0,0,0" Padding="8,2"/>
+            <Button x:Name="HelpButton" Content="Graph Permission Note" Margin="10,0,0,0" Padding="8,2"/>
         </StackPanel>
 
         <!-- Log box -->
@@ -184,7 +186,7 @@ $Tenants | ForEach-Object { [void]$TenantCombo.Items.Add($_) }
 $TenantCombo.SelectedIndex = 0
 $ProfileCombo.SelectedIndex = 0
 
-# Help button (GA / Graph note)
+# Help button
 $HelpButton.Add_Click({
     $msg = @"
 Being a Global Administrator does NOT automatically grant full Microsoft Graph permissions.
@@ -192,13 +194,12 @@ Being a Global Administrator does NOT automatically grant full Microsoft Graph p
 Microsoft Graph permissions are granted to APPLICATIONS, not users.
 
 Even if you sign in as a Global Admin, your app registration must still be explicitly
-assigned the required Graph permissions (delegated or application) and must have
-ADMIN CONSENT granted.
+assigned the required Graph permissions and must have ADMIN CONSENT granted.
 
 Global Admin = full access in the portal
 Global Admin ≠ full access in Microsoft Graph
 "@
-    [System.Windows.MessageBox]::Show($msg,"Global Admin / Graph Permissions","OK","Information") | Out-Null
+    [System.Windows.MessageBox]::Show($msg,"Graph Permissions","OK","Information") | Out-Null
 })
 
 # Close button
@@ -210,7 +211,7 @@ $CloseButton.Add_Click({
 $ConnectButton.Add_Click({
     $selectedTenant = $TenantCombo.SelectedItem
     if (-not $selectedTenant) {
-        Write-Log "No tenant selected." "Red"
+        Write-Log "No tenant selected."
         return
     }
 
@@ -245,10 +246,10 @@ $ConnectButton.Add_Click({
             }
         }
 
-        Write-Log "M365-Connect SYSTEM is ready for this tenant/profile." "DarkCyan"
+        Write-Log "M365-Connect SYSTEM is ready."
     }
     catch {
-        Write-Log "ERROR: $($_.Exception.Message)" "Red"
+        Write-Log "ERROR: $($_.Exception.Message)"
     }
 })
 
