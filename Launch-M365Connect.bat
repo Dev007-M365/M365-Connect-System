@@ -18,9 +18,7 @@ echo   M365-Connect SYSTEM Launcher (pwsh 7)
 echo ==========================================
 echo.
 
-REM ---------------------------------------------------------
-REM 1) Kill any stuck PowerShell 7 processes
-REM ---------------------------------------------------------
+REM --- Kill any stuck PowerShell 7 processes ---
 echo Checking for stuck PowerShell 7 processes...
 tasklist | findstr /I "pwsh.exe" >nul 2>&1
 if %errorlevel%==0 (
@@ -32,14 +30,10 @@ if %errorlevel%==0 (
 )
 echo.
 
-REM ---------------------------------------------------------
-REM 2) Define script directory
-REM ---------------------------------------------------------
+REM --- Folder where this BAT file lives ---
 set SCRIPT_DIR=%~dp0
 
-REM ---------------------------------------------------------
-REM 3) Auto-detect ANY .ps1 script in the folder
-REM ---------------------------------------------------------
+REM --- Auto-detect ANY .ps1 script in the folder ---
 set SCRIPT_PATH=
 
 for %%F in ("%SCRIPT_DIR%*.ps1") do (
@@ -58,9 +52,7 @@ echo Found script:
 echo   %SCRIPT_PATH%
 echo.
 
-REM ---------------------------------------------------------
-REM 4) Check for PowerShell 7
-REM ---------------------------------------------------------
+REM --- Check for PowerShell 7 ---
 where pwsh >nul 2>&1
 if %errorlevel% neq 0 (
     echo ERROR: PowerShell 7 not found.
@@ -69,18 +61,14 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM ---------------------------------------------------------
-REM 5) Run updater.ps1 (self-update system)
-REM ---------------------------------------------------------
+REM --- Run updater.ps1 (self-update system) ---
 if exist "%SCRIPT_DIR%updater.ps1" (
     echo Checking for updates...
     pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%updater.ps1"
     echo.
 )
 
-REM ---------------------------------------------------------
-REM 6) Check required modules
-REM ---------------------------------------------------------
+REM --- Check required modules ---
 echo Checking required PowerShell modules...
 pwsh -NoLogo -NoProfile -Command ^
     " $modules = 'Microsoft.Graph','ExchangeOnlineManagement','PnP.PowerShell','MicrosoftTeams' ;" ^
@@ -95,9 +83,7 @@ pwsh -NoLogo -NoProfile -Command ^
     " } ;" ^
     " if ($missing.Count -gt 0) { exit 2 } else { exit 0 }"
 
-REM ---------------------------------------------------------
-REM 7) Auto-install missing modules
-REM ---------------------------------------------------------
+REM --- Auto-install missing modules ---
 if %errorlevel%==2 (
     echo.
     echo Missing modules detected. Auto-installing...
@@ -114,11 +100,10 @@ if %errorlevel%==2 (
     echo.
 )
 
-REM ---------------------------------------------------------
-REM 8) Launch the GUI script
-REM ---------------------------------------------------------
+REM --- Launch the GUI script ---
 echo Launching M365-Connect SYSTEM...
 echo.
 
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_PATH%"
 endlocal
+
